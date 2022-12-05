@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, createContext, useContext } from 'react';
 import { data, IItem } from './data';
 import './styles.css';
-
+const DataContext = createContext(data);
+const ThemeContext = createContext('light' as Theme);
+const ItemContext = createContext(data[0]);
 type Theme = 'light' | 'dark';
-
 export function App() {
     const [currentTheme, setCurrentTheme] = useState<Theme>('light');
 
@@ -12,29 +13,38 @@ export function App() {
     }
 
     const className = `app app_${currentTheme}`;
+
     return (
         <div className={className}>
             <button onClick={changeTheme}>Toggle theme</button>
-            <List theme={currentTheme} data={data} />
+            <DataContext.Provider value={data}>
+                <ThemeContext.Provider value={currentTheme}>
+                    <List />
+                </ThemeContext.Provider>
+            </DataContext.Provider>
         </div>
     );
 }
 
-function List(props: { theme: Theme; data: IItem[] }) {
+function List() {
+    const data = useContext(DataContext);
+    const main_theme = useContext(ThemeContext);
     return (
         <div>
             {data.map((item) => (
-                <ListItem
-                    theme={props.theme}
-                    caption={item.name}
-                    key={item.id}
-                />
+                <ItemContext.Provider value={item} key={item.id}>
+                    <ThemeContext.Provider value={main_theme}>
+                        <ListItem />
+                    </ThemeContext.Provider>
+                </ItemContext.Provider>
             ))}
         </div>
     );
 }
 
-function ListItem(props: { theme: Theme; caption: string }) {
-    const className = `listItem listItem_${props.theme}`;
-    return <div className={className}>{props.caption}</div>;
+function ListItem() {
+    const theme = useContext(ThemeContext);
+    const item = useContext(ItemContext);
+    const className = `listItem listItem_${theme}`;
+    return <div className={className}>{item.name}</div>;
 }
